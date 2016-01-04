@@ -58,8 +58,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\ClearExistingAlbumCoversCommand.cs" />
+    <Compile Include="Commands\ICommand.cs" />
+    <Compile Include="Commands\WriteAlbumCoversCommand.cs" />
+    <Compile Include="Helpers.cs" />
     <Compile Include="Options\BaseOptions.cs" />
     <Compile Include="Options\ClearExistingAlbumCoversOptions.cs" />
+    <Compile Include="Options\IOptions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Options\WriteAlbumCoversOptions.cs" />

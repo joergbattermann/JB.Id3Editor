@@ -1,169 +1,68 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Threading;
 using CommandLine;
+using JB.Id3Editor.Commands;
 using JB.Id3Editor.Options;
 
 namespace JB.Id3Editor
 {
     class Program
     {
-        private const string DefaultMappingsFilename = "DefaultMappings.ini";
-
-        private string DefaultCoverFile;
-
-        private Dictionary<string, string> GenresToCoverFilesMapping;
+        /// <summary>
+        /// The cancellation token source used for ctrl+c handling
+        /// </summary>
+        private static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
 
         public static int Main(string[] args)
         {
-            return CommandLine.Parser.Default.ParseArguments<ClearExistingAlbumCoversOptions, WriteAlbumCoversOptions>(args)
+            try
+            {
+                Console.CancelKeyPress += OnConsoleCancelKeyPress;
+
+                return Parser.Default.ParseArguments<ClearExistingAlbumCoversOptions, WriteAlbumCoversOptions>(args)
                 .MapResult(
-                    (ClearExistingAlbumCoversOptions opts) => ClearExistingAlbumCoversAndReturnExitCode(opts),
-                    (WriteAlbumCoversOptions opts) => WriteAlbumCoversAndReturnExitCode(opts),
-                    errs => 1);
-        }
-
-        private static int ClearExistingAlbumCoversAndReturnExitCode(ClearExistingAlbumCoversOptions opts)
-        {
-            IEnumerable<string> filesToProcess = null;
-            if (IsDirectory(opts.TargetPath))
-            {
-                filesToProcess = System.IO.Directory.EnumerateFiles(
-                    opts.TargetPath,
-                    "*.mp3",
-                    opts.Recursive
-                    ? System.IO.SearchOption.AllDirectories
-                    : System.IO.SearchOption.TopDirectoryOnly);
-            }
-            else
-            {
-                if (System.IO.File.Exists(opts.TargetPath))
-                {
-                    filesToProcess = new List<string>()
+                    (ClearExistingAlbumCoversOptions options) =>
                     {
-                        opts.TargetPath
-                    };
-                }
-                else
-                {
-                    Console.WriteLine("File or Directory '{0}' not found!", opts.TargetPath ?? "n.a.");
-                    return 1;
-                }
-            }
+                        var command = new ClearExistingAlbumCoversCommand();
 
-            var errorOccured = false;
-            foreach (var fileToProcess in filesToProcess)
+                        return command.RunAndReturnExitCode(options, CancellationTokenSource.Token);
+                    },
+                    (WriteAlbumCoversOptions options) =>
+                    {
+                        var command = new WriteAlbumCoversCommand();
+
+                        return command.RunAndReturnExitCode(options, CancellationTokenSource.Token);
+                    },
+                    errors => 1);
+            }
+            catch (Exception exception)
             {
+                var currentConsoleForegroundColor = Console.ForegroundColor;
                 try
                 {
-                    ClearAlbumCovers(fileToProcess);
-                    Console.WriteLine("Cleaning '{0}' - Success", fileToProcess);
-                }
-                catch (Exception exception)
-                {
-                    errorOccured = true;
+                    Console.ForegroundColor = ConsoleColor.Red;
 
-                    var currentForeColor = Console.ForegroundColor;
-                    try
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Something bad happened: {0}", exception);
 
-                        Console.WriteLine("Cleaning '{0}' - Error: {1}", fileToProcess, exception.Message);
-                    }
-                    finally
-                    {
-                        Console.ForegroundColor = currentForeColor;
-                    }
-                }
-            }
-
-            return errorOccured ? 1 : 0;
-        }
-
-        private static int WriteAlbumCoversAndReturnExitCode(WriteAlbumCoversOptions opts)
-        {
-            IEnumerable<string> filesToProcess = null;
-            if (IsDirectory(opts.TargetPath))
-            {
-                filesToProcess = System.IO.Directory.EnumerateFiles(
-                    opts.TargetPath,
-                    "*.mp3",
-                    opts.Recursive
-                    ? System.IO.SearchOption.AllDirectories
-                    : System.IO.SearchOption.TopDirectoryOnly);
-            }
-            else
-            {
-                if (System.IO.File.Exists(opts.TargetPath))
-                {
-                    filesToProcess = new List<string>()
-                    {
-                        opts.TargetPath
-                    };
-                }
-                else
-                {
-                    Console.WriteLine("File or Directory '{0}' not found!", opts.TargetPath ?? "n.a.");
                     return 1;
                 }
-            }
-
-            var errorOccured = false;
-            foreach (var fileToProcess in filesToProcess)
-            {
-                try
+                finally
                 {
-                    WriteAlbumCovers(fileToProcess, opts.Force);
-                    Console.WriteLine("Cleaning '{0}' - Success", fileToProcess);
-                }
-                catch (Exception exception)
-                {
-                    errorOccured = true;
-
-                    var currentForeColor = Console.ForegroundColor;
-                    try
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-
-                        Console.WriteLine("Cleaning '{0}' - Error: {1}", fileToProcess, exception.Message);
-                    }
-                    finally
-                    {
-                        Console.ForegroundColor = currentForeColor;
-                    }
+                    Console.ForegroundColor = currentConsoleForegroundColor;
                 }
             }
-
-            return errorOccured ? 1 : 0;
-
-            throw new NotImplementedException();
         }
 
-        private static void WriteAlbumCovers(string fileToProcess, bool force)
+        /// <summary>
+        /// Called when [CTRL+C] is pressed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="consoleCancelEventArgs">The <see cref="ConsoleCancelEventArgs"/> instance containing the event data.</param>
+        private static void OnConsoleCancelKeyPress(object sender, ConsoleCancelEventArgs consoleCancelEventArgs)
         {
-            throw new NotImplementedException();
-        }
+            CancellationTokenSource.Cancel(); // signal cancellation to command(s)
 
-        private static bool IsDirectory(string path)
-        {
-            // see http://stackoverflow.com/questions/439447/net-how-to-check-if-path-is-a-file-and-not-a-directory
-            return (System.IO.File.GetAttributes(path) & System.IO.FileAttributes.Directory)
-                == System.IO.FileAttributes.Directory;
-        }
-
-        private static void ClearAlbumCovers(string pathToFile)
-        {
-            using (var tagLibFile = TagLib.File.Create(pathToFile))
-            {
-                if (!tagLibFile.Writeable)
-                    throw new IOException("File is not writeable");
-
-                if (tagLibFile.Tag != null && tagLibFile.Tag.Pictures != null && tagLibFile.Tag.Pictures.Length > 0)
-                {
-                    tagLibFile.Tag.Pictures = new TagLib.IPicture[0];
-                    tagLibFile.Save();
-                }
-            }
+            consoleCancelEventArgs.Cancel = true; // cancel process termination
         }
     }
 }
