@@ -19,12 +19,17 @@ namespace JB.Id3Editor.Commands
         /// <returns></returns>
         public int RunAndReturnExitCode(ClearExistingAlbumCoversOptions options, CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (options == null) throw new ArgumentNullException(nameof(options));
+
+            if (string.IsNullOrWhiteSpace(options.TargetPath)) throw new ArgumentOutOfRangeException(nameof(options), "TargetPath may not be empty.");
+            if (string.IsNullOrWhiteSpace(options.SearchFilter)) throw new ArgumentOutOfRangeException(nameof(options), "SearchFilter may not be empty.");
+
             IEnumerable<string> filesToProcess = null;
             if (Helpers.IsDirectory(options.TargetPath))
             {
                 filesToProcess = System.IO.Directory.EnumerateFiles(
                     options.TargetPath,
-                    "*.mp3",
+                    options.SearchFilter,
                     options.Recursive
                     ? System.IO.SearchOption.AllDirectories
                     : System.IO.SearchOption.TopDirectoryOnly);
@@ -61,8 +66,6 @@ namespace JB.Id3Editor.Commands
                 {
                     try
                     {
-                        Thread.Sleep(1000);
-
                         ClearAlbumCovers(fileToProcess);
                         Console.WriteLine("Cleaning '{0}' - Success", fileToProcess);
                     }
@@ -75,7 +78,7 @@ namespace JB.Id3Editor.Commands
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
 
-                            Console.WriteLine("Cleaning '{0}' - Error: {1}", fileToProcess, exception.Message);
+                            Console.WriteLine("Error Cleaning '{0}': {1}", fileToProcess, exception.Message);
                         }
                         finally
                         {

@@ -35,6 +35,27 @@ namespace JB.Id3Editor
                     },
                     errors => 1);
             }
+            catch (AggregateException aggregateException)
+            {
+                var currentConsoleForegroundColor = Console.ForegroundColor;
+                try
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+
+                    Console.WriteLine("Something bad happened:");
+
+                    foreach (var exception in aggregateException.Flatten().InnerExceptions)
+                    {
+                        Console.WriteLine("- {0}", exception.Message);
+                    }
+
+                    return 1;
+                }
+                finally
+                {
+                    Console.ForegroundColor = currentConsoleForegroundColor;
+                }
+            }
             catch (Exception exception)
             {
                 var currentConsoleForegroundColor = Console.ForegroundColor;
