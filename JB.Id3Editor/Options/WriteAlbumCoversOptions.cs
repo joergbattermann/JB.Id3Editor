@@ -2,7 +2,7 @@ using CommandLine;
 
 namespace JB.Id3Editor.Options
 {
-    [Verb("writecover", HelpText = "Writes album cover(s) to .mp3 file(s).")]
+    [Verb("writecovers", HelpText = "Writes album cover(s) to target file(s) as specified in .ini(s).")]
     public class WriteAlbumCoversOptions : BaseOptions
     {
         [Option(Required = false, Default = "", HelpText = "Full path to custom Mappings.ini file.")]

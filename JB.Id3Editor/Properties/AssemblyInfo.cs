@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Joerg Battermann")]
 [assembly: AssemblyProduct("JB.Id3Editor")]
-[assembly: AssemblyCopyright("Copyright © 2016 Joerg Battermann")]
+[assembly: AssemblyCopyright("Copyright (c) 2016 Joerg Battermann")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

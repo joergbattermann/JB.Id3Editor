@@ -92,31 +92,9 @@ namespace JB.Id3Editor.Commands
                 }
             }
 
-            IEnumerable<string> filesToProcess = null;
-            if (Helpers.IsDirectory(options.TargetPath))
-            {
-                filesToProcess = System.IO.Directory.EnumerateFiles(
-                    options.TargetPath,
+            IEnumerable<string> filesToProcess = Helpers.GetFilesToProcess(options.TargetPath,
                     options.SearchFilter,
-                    options.Recursive
-                    ? System.IO.SearchOption.AllDirectories
-                    : System.IO.SearchOption.TopDirectoryOnly);
-            }
-            else
-            {
-                if (File.Exists(options.TargetPath))
-                {
-                    filesToProcess = new List<string>()
-                    {
-                        options.TargetPath
-                    };
-                }
-                else
-                {
-                    Console.WriteLine("File or Directory '{0}' not found!", options.TargetPath ?? "n.a.");
-                    return 1;
-                }
-            }
+                    options.Recursive);
 
             var errorOccured = false;
 
@@ -215,7 +193,7 @@ namespace JB.Id3Editor.Commands
                 if (overwriteExistingCovers == false
                     && tagLibFile.Tag != null
                     && tagLibFile.Tag.Pictures != null
-                    && tagLibFile.Tag.Pictures.Length > 0)
+                    && tagLibFile.Tag.Pictures.Any(picture => picture.Type == PictureType.FrontCover))
                 {
                     Console.WriteLine("NO Cover written to '{0}' - Skipped ({1} existing cover(s) found)", pathToFile, tagLibFile.Tag.Pictures.Length);
                     return;
@@ -229,7 +207,11 @@ namespace JB.Id3Editor.Commands
 
                 if (tagLibFile.Tag != null)
                 {
-                    tagLibFile.Tag.Pictures = new TagLib.IPicture[] { new Picture(coverToUse) };
+                    tagLibFile.Tag.Pictures = tagLibFile.Tag.Pictures.Where(picture => picture.Type != PictureType.FrontCover)
+                        .Concat(new[]
+                        {
+                            new Picture(coverToUse) {Type = PictureType.FrontCover}
+                        }).ToArray();
                     tagLibFile.Save();
 
                     Console.WriteLine("'{0}' Cover written to '{1}' - Success", string.Equals(coverToUse, defaultCover) ? "Default" : tagLibFile.Tag.FirstGenre.Trim(), pathToFile);

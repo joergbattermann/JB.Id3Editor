@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using JB.Id3Editor.Options;
+using TagLib;
 
 namespace JB.Id3Editor.Commands
 {
@@ -24,32 +26,10 @@ namespace JB.Id3Editor.Commands
             if (string.IsNullOrWhiteSpace(options.TargetPath)) throw new ArgumentOutOfRangeException(nameof(options), "TargetPath may not be empty.");
             if (string.IsNullOrWhiteSpace(options.SearchFilter)) throw new ArgumentOutOfRangeException(nameof(options), "SearchFilter may not be empty.");
 
-            IEnumerable<string> filesToProcess = null;
-            if (Helpers.IsDirectory(options.TargetPath))
-            {
-                filesToProcess = System.IO.Directory.EnumerateFiles(
-                    options.TargetPath,
+            IEnumerable<string> filesToProcess = Helpers.GetFilesToProcess(options.TargetPath,
                     options.SearchFilter,
-                    options.Recursive
-                    ? System.IO.SearchOption.AllDirectories
-                    : System.IO.SearchOption.TopDirectoryOnly);
-            }
-            else
-            {
-                if (File.Exists(options.TargetPath))
-                {
-                    filesToProcess = new List<string>()
-                    {
-                        options.TargetPath
-                    };
-                }
-                else
-                {
-                    Console.WriteLine("File or Directory '{0}' not found!", options.TargetPath ?? "n.a.");
-                    return 1;
-                }
-            }
-
+                    options.Recursive);
+            
             var errorOccured = false;
             
             try
@@ -124,7 +104,7 @@ namespace JB.Id3Editor.Commands
 
                 if (tagLibFile.Tag != null && tagLibFile.Tag.Pictures != null && tagLibFile.Tag.Pictures.Length > 0)
                 {
-                    tagLibFile.Tag.Pictures = new TagLib.IPicture[0];
+                    tagLibFile.Tag.Pictures = tagLibFile.Tag.Pictures.Where(picture => picture.Type != PictureType.BackCover && picture.Type != PictureType.FrontCover).ToArray();
                     tagLibFile.Save();
                 }
             }

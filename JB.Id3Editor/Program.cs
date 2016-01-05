@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using CommandLine;
+using CommandLine.Text;
 using JB.Id3Editor.Commands;
 using JB.Id3Editor.Options;
 
@@ -13,6 +16,8 @@ namespace JB.Id3Editor
         /// </summary>
         private static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
 
+        internal const int DefaultErrorCode = 1;
+
         public static int Main(string[] args)
         {
             try
@@ -21,25 +26,36 @@ namespace JB.Id3Editor
 
                 var parser = new Parser(settings =>
                 {
-                    settings.HelpWriter = Console.Error;
                     settings.IgnoreUnknownArguments = true;
                 });
+                
+                var parserResult = parser.ParseArguments<ClearExistingAlbumCoversOptions, WriteAlbumCoversOptions>(args);
+                if (parserResult.Tag == ParserResultType.Parsed)
+                {
+                    return parserResult.MapResult(
+                        (ClearExistingAlbumCoversOptions options) =>
+                        {
+                            var command = new ClearExistingAlbumCoversCommand();
 
-                return parser.ParseArguments<ClearExistingAlbumCoversOptions, WriteAlbumCoversOptions>(args)
-                .MapResult(
-                    (ClearExistingAlbumCoversOptions options) =>
-                    {
-                        var command = new ClearExistingAlbumCoversCommand();
-
-                        return command.RunAndReturnExitCode(options, CancellationTokenSource.Token);
-                    },
+                            return command.RunAndReturnExitCode(options, CancellationTokenSource.Token);
+                        },
                     (WriteAlbumCoversOptions options) =>
                     {
                         var command = new WriteAlbumCoversCommand();
 
                         return command.RunAndReturnExitCode(options, CancellationTokenSource.Token);
                     },
-                    errors => 1);
+                    errors => DefaultErrorCode);
+                }
+                else
+                {
+                    var helpText = HelpText.AutoBuild(parserResult);
+                    helpText.Heading = GetHelpTextHeading();
+
+                    Console.Error.Write(helpText);
+
+                    return DefaultErrorCode;
+                }
             }
             catch (AggregateException aggregateException)
             {
@@ -78,6 +94,18 @@ namespace JB.Id3Editor
                     Console.ForegroundColor = currentConsoleForegroundColor;
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets the help text heading.
+        /// </summary>
+        /// <returns></returns>
+        private static string GetHelpTextHeading()
+        {
+            var title = typeof (Program).Assembly.GetAssemblyAttribute<AssemblyTitleAttribute>();
+            var version = typeof(Program).Assembly.GetName().Version;
+
+            return $"{title.Title} v{version}";
         }
 
         /// <summary>
