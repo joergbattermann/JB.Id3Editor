@@ -19,7 +19,13 @@ namespace JB.Id3Editor
             {
                 Console.CancelKeyPress += OnConsoleCancelKeyPress;
 
-                return Parser.Default.ParseArguments<ClearExistingAlbumCoversOptions, WriteAlbumCoversOptions>(args)
+                var parser = new Parser(settings =>
+                {
+                    settings.HelpWriter = Console.Error;
+                    settings.IgnoreUnknownArguments = true;
+                });
+
+                return parser.ParseArguments<ClearExistingAlbumCoversOptions, WriteAlbumCoversOptions>(args)
                 .MapResult(
                     (ClearExistingAlbumCoversOptions options) =>
                     {
