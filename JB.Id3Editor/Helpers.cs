@@ -8,6 +8,27 @@ namespace JB.Id3Editor
     public static class Helpers
     {
         /// <summary>
+        /// Normalizes the target path.
+        /// </summary>
+        /// <param name="targetPath">The target path.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        public static string NormalizeTargetPath(string targetPath)
+        {
+            if (targetPath == null) throw new ArgumentNullException(nameof(targetPath));
+            // see https://github.com/gsscoder/commandline/issues?utf8=%E2%9C%93&q=path
+
+            if(targetPath.EndsWith(":"))
+                return targetPath + "\\";
+
+            if(targetPath.EndsWith("\""))
+                return targetPath.Replace("\"", "\\");
+            
+            // else
+           return targetPath;
+        }
+
+        /// <summary>
         /// Determines whether the specified path is a directory.
         /// </summary>
         /// <param name="path">The path.</param>
@@ -19,17 +40,7 @@ namespace JB.Id3Editor
                 throw new ArgumentException("Argument is null or whitespace", nameof(path));
 
             // handle root drive(s) first
-            if (System.IO.DriveInfo.GetDrives().Any(drive =>
-            {
-                return string.Equals(drive.Name, path, StringComparison.InvariantCultureIgnoreCase);
-            }))
-            {
-                return true;
-            }
-
-            // see http://stackoverflow.com/questions/439447/net-how-to-check-if-path-is-a-file-and-not-a-directory
-            return (System.IO.File.GetAttributes(path) & System.IO.FileAttributes.Directory)
-                == System.IO.FileAttributes.Directory;
+            return Directory.Exists(path);
         }
 
         /// <summary>
@@ -42,10 +53,11 @@ namespace JB.Id3Editor
         /// <exception cref="System.IO.IOException"></exception>
         public static IEnumerable<string> GetFilesToProcess(string targetPath, string searchFilter, bool recursive)
         {
-            if (IsDirectory(targetPath))
+            var normalizedTargetPath = Helpers.NormalizeTargetPath(targetPath);
+            if (IsDirectory(normalizedTargetPath))
             {
                 return Directory.EnumerateFiles(
-                    targetPath,
+                    normalizedTargetPath,
                     searchFilter,
                     recursive
                     ? SearchOption.AllDirectories
@@ -53,7 +65,7 @@ namespace JB.Id3Editor
             }
             else
             {
-                if (File.Exists(targetPath))
+                if (File.Exists(normalizedTargetPath))
                 {
                     return new List<string>()
                     {
@@ -62,7 +74,7 @@ namespace JB.Id3Editor
                 }
                 else
                 {
-                    throw new IOException(string.Format("File or Directory '{0}' not found!", targetPath ?? "n.a."));
+                    throw new IOException(string.Format("File or Directory '{0}' not found!", normalizedTargetPath ?? "n.a."));
                 }
             }
         }

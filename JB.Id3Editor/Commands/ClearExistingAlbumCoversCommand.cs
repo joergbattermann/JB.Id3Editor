@@ -26,9 +26,10 @@ namespace JB.Id3Editor.Commands
             if (string.IsNullOrWhiteSpace(options.TargetPath)) throw new ArgumentOutOfRangeException(nameof(options), "TargetPath may not be empty.");
             if (string.IsNullOrWhiteSpace(options.SearchFilter)) throw new ArgumentOutOfRangeException(nameof(options), "SearchFilter may not be empty.");
 
-            IEnumerable<string> filesToProcess = Helpers.GetFilesToProcess(options.TargetPath,
-                    options.SearchFilter,
-                    options.Recursive);
+            IEnumerable<string> filesToProcess = Helpers.GetFilesToProcess(
+                options.TargetPath,
+                options.SearchFilter,
+                options.Recursive);
             
             var errorOccured = false;
             

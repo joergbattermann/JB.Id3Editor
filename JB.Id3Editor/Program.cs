@@ -117,6 +117,8 @@ namespace JB.Id3Editor
         {
             CancellationTokenSource.Cancel(); // signal cancellation to command(s)
 
+            Console.WriteLine("Cancellation request received, finishing currect activities, please wait...");
+
             consoleCancelEventArgs.Cancel = true; // cancel process termination
         }
     }
