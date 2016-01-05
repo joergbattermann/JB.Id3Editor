@@ -18,6 +18,15 @@ namespace JB.Id3Editor
             if (string.IsNullOrWhiteSpace(path))
                 throw new ArgumentException("Argument is null or whitespace", nameof(path));
 
+            // handle root drive(s) first
+            if (System.IO.DriveInfo.GetDrives().Any(drive =>
+            {
+                return string.Equals(drive.Name, path, StringComparison.InvariantCultureIgnoreCase);
+            }))
+            {
+                return true;
+            }
+
             // see http://stackoverflow.com/questions/439447/net-how-to-check-if-path-is-a-file-and-not-a-directory
             return (System.IO.File.GetAttributes(path) & System.IO.FileAttributes.Directory)
                 == System.IO.FileAttributes.Directory;
