@@ -2,11 +2,23 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace JB.Id3Editor
 {
     public static class Helpers
     {
+        private static readonly Lazy<string> ExecutingPath = new Lazy<string>(() => new FileInfo(typeof(Program).Assembly.Location).DirectoryName);
+
+        /// <summary>
+        /// Gets the executing path.
+        /// </summary>
+        /// <returns></returns>
+        public static string GetExecutingPath()
+        {
+            return ExecutingPath.Value;
+        }
+
         /// <summary>
         /// Normalizes the target path.
         /// </summary>
@@ -77,6 +89,22 @@ namespace JB.Id3Editor
                     throw new IOException(string.Format("File or Directory '{0}' not found!", normalizedTargetPath ?? "n.a."));
                 }
             }
+        }
+
+        /// <summary>
+        /// Normalizes the potential relative to full path.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Argument is null or whitespace</exception>
+        public static string NormalizePotentialRelativeToFullPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Argument is null or whitespace", nameof(path));
+
+            if (Path.IsPathRooted(path))
+                return path;
+
+            return Path.GetFullPath(Path.Combine(GetExecutingPath(), path));
         }
 
         /// <summary>

@@ -46,12 +46,12 @@ namespace JB.Id3Editor.Commands
             fileIniData.Parser.Configuration.AllowKeysWithoutSection = false;
             fileIniData.Parser.Configuration.CaseInsensitive = true;
 
-            var mappingsIniFile = fileIniData.ReadFile(DefaultMappingsFilename);
+            var mappingsIniFile = fileIniData.ReadFile(Helpers.NormalizePotentialRelativeToFullPath(DefaultMappingsFilename));
 
             // merge with custom / user mappings file, if applicable
-            if (!string.IsNullOrWhiteSpace(options.CustomMappingsFile) && File.Exists(options.CustomMappingsFile))
+            if (!string.IsNullOrWhiteSpace(options.CustomMappingsFile) && File.Exists(Helpers.NormalizePotentialRelativeToFullPath(options.CustomMappingsFile)))
             {
-                var customMappingsIniFile = fileIniData.ReadFile(options.CustomMappingsFile);
+                var customMappingsIniFile = fileIniData.ReadFile(Helpers.NormalizePotentialRelativeToFullPath(options.CustomMappingsFile));
 
                 mappingsIniFile.Merge(customMappingsIniFile);
             }
@@ -69,6 +69,9 @@ namespace JB.Id3Editor.Commands
             if(string.IsNullOrWhiteSpace(defaultCoverFile))
                 throw new ArgumentOutOfRangeException(nameof(options), $"'{DefaultCoverKey}' entry in '[{DefaultsSection}]' in the configuration file(s) may not be empty.");
 
+            // normalize cover path
+            defaultCoverFile = Helpers.NormalizePotentialRelativeToFullPath(defaultCoverFile);
+
             if (!File.Exists(defaultCoverFile))
                 throw new ArgumentOutOfRangeException(nameof(options), $"File '{defaultCoverFile}' configured in '[{DefaultsSection}]' > '{DefaultCoverKey}' entry in the configuration file(s) does not exist.");
 
@@ -78,7 +81,7 @@ namespace JB.Id3Editor.Commands
                 foreach (var keyData in mappingsIniFile.Sections[GenresSection].Where(keyData => !string.IsNullOrWhiteSpace(keyData.KeyName) && !string.IsNullOrWhiteSpace(keyData.Value)))
                 {
                     var key = keyData.KeyName.Trim();
-                    var value = keyData.Value.Trim();
+                    var value = Helpers.NormalizePotentialRelativeToFullPath(keyData.Value.Trim());
 
                     if (!File.Exists(value))
                         continue;

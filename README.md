@@ -37,6 +37,12 @@ It'll contain, among other file(s) and folder(s) to operate, a '*JB.Id3Editor.ex
 
 This tool is written in .Net 4.5 and is full [Mono](http://www.mono-project.com/download/) compatible (tried it with 4.2.x) and therefore runs (*tested*) on **Windows**, **Mac OS X** as well as (*probably, untested*) on **Linux** as long as you have a .Net 4.5 runtime on your system.
 
+### Known Limitations and Issues
+
+* the ```--targetpath``` parameter does not work properly if the specified path has a trailing ```\```. This is stupid, but [a known bug](https://github.com/gsscoder/commandline/issues/240) of the [Command Line Parser Library](https://github.com/gsscoder/commandline).
+    * Known Workaround a): specify the ```--targetpath``` parameter without a trailing ```\``` or
+    * Known Workaround b): specify the ```--targetpath``` parameter as the very last parameter
+
 ### Functionalities
 
 This tool currently provides the following commands and options which may or may not grow in the future:
@@ -160,7 +166,7 @@ d:\JB.Id3Editor.exe writecovers --force --recursive --maxdegreeofparallelism=4 -
 
 ###### Write cover art per genre to all files in a target directory and its sub-directories, overwriting existing cover art:
 ```
-d:\JB.Id3Editor.exe writecovers --force --recursive --targetpath="D:\My_Awesome_Music_Collection\" --custommappingsfile="./My_Custom_Mappings.ini"
+d:\JB.Id3Editor.exe writecovers --force --recursive --custommappingsfile="./My_Custom_Mappings.ini" --targetpath="D:\My_Awesome_Music_Collection\"
 ```
 
 The ```--custommappingsfile``` option and its specified file can contain custom mappings of the genre ID3 tag to different cover art.
